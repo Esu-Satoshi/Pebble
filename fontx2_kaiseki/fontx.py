@@ -63,7 +63,7 @@ class Fontx :
 
     def out_file(self, code_list):
 
-        f = open("UTC2.FNT",'w')
+        f = open("UCS2.FNT",'w')
         for sjis in code_list :
             if( sjis == 0 ): continue
             font_pos = self.search_font(sjis)
@@ -86,9 +86,9 @@ class SJIStoUnicode:
             line = line.rstrip("\n")
             if( line[0] != '#' ):
                 data = line.split('\t')
-                (sjis, utc) = int(data[0],16), int(data[1],16)
-                #print (sjis, utc), data[1]
-                self.List[utc] = sjis
+                (sjis, ucs) = int(data[0],16), int(data[1],16)
+                #print (sjis, ucs), data[1]
+                self.List[ucs] = sjis
                 
             line = f.readline()
 
@@ -97,27 +97,27 @@ class SJIStoUnicode:
         (start, end) = (0,0)
         self.block = []
         flg = 0
-        utc = 0
+        ucs = 0
         for sjis in self.List :
             if( sjis == 0 ):
                 if( flg == 1 ):
                     flg = 0
-                    end = utc - 1
+                    end = ucs - 1
                     self.block.append((start,end))
                     #print "start - end", sjis, (start,end)
             else:
                 if( flg == 0 ):
                     flg = 1
-                    start = utc
+                    start = ucs
                     #print "start - end", sjis, (start,end)
                     
-            utc = utc + 1
+            ucs = ucs + 1
 
         print len(self.block)
 
 
     def out_file(self):
-        f = open("UTCCODE.TBL",'w')
+        f = open("UCSCODE.TBL",'w')
 
         f.write(struct.pack('H', len(self.block))) # Tnum
         
