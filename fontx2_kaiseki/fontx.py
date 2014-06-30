@@ -1,5 +1,6 @@
 ﻿import struct
 import binascii
+import re
 
 class Fontx :
     
@@ -45,21 +46,107 @@ class Fontx :
                 break
 
             cnt = cnt + (end - start + 1)
+        return 0
         
     def print_font(self, font_pos):
         data = self.Font[font_pos]
         data = struct.unpack('BBBBBBBB',data)
         for var in data:
-            print '{0:0>8b}'.format(var)
+            #print '{0:0>8b}'.format(var)
+            for i in range(8):
+                if( 0 == (var & (0x80>>i))):
+                    print " ",
+                else:
+                    print "*",
+                    
+            print ""
+
+    def out_file(self, code_list):
+
+        f = open("UTC2.FNT",'w')
+        for sjis in code_list :
+            if( sjis == 0 ): continue
+            font_pos = self.search_font(sjis)
+            if( font_pos == 0 ): continue
+
+            #self.print_font(font_pos)
+            
+            f.write( self.Font[font_pos] )
+            
+        f.close()
+
+class SJIStoUnicode:
+    def open(self):
+        self.List = [0] * 0xffff
         
+        f = open("SHIFTJIS.TXT",'r')        
+
+        line = f.readline()
+        while line:
+            line = line.rstrip("\n")
+            if( line[0] != '#' ):
+                data = line.split('\t')
+                (sjis, utc) = int(data[0],16), int(data[1],16)
+                #print (sjis, utc), data[1]
+                self.List[utc] = sjis
+                
+            line = f.readline()
+
+    def out_table(self):
+
+        (start, end) = (0,0)
+        self.block = []
+        flg = 0
+        utc = 0
+        for sjis in self.List :
+            if( sjis == 0 ):
+                if( flg == 1 ):
+                    flg = 0
+                    end = utc - 1
+                    self.block.append((start,end))
+                    #print "start - end", sjis, (start,end)
+            else:
+                if( flg == 0 ):
+                    flg = 1
+                    start = utc
+                    #print "start - end", sjis, (start,end)
+                    
+            utc = utc + 1
+
+        print len(self.block)
+
+
+    def out_file(self):
+        f = open("UTCCODE.TBL",'w')
+
+        f.write(struct.pack('H', len(self.block))) # Tnum
+        
+        for (start,end) in self.block :
+            f.write(struct.pack('HH', start, end)) # Block(Start, End)
+
+        f.close()
+    
 #=================================
 
-a = Fontx()
-a.open()
-#a.out_string()
-pos = a.search_font(0x8440)
-print pos
-a.print_font(pos)
+def TestFontx():
+    f = Fontx()
+    f.open()
+    #a.out_string()
+    for code in range( 0xffff ):
+        pos = f.search_font(code)
+        if(pos != 0 ): 
+            print "==", code, "======"
+            f.print_font(pos)
+
+
+sj = SJIStoUnicode()
+sj.open()
+sj.out_table()
+sj.out_file()
+
+f = Fontx()
+f.open()
+f.out_file(sj.List)
 
 
 
