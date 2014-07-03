@@ -1,4 +1,6 @@
-﻿import struct
+# coding: UTF-8
+
+import struct
 import binascii
 import re
 
@@ -63,13 +65,25 @@ class Fontx :
 
     def out_file(self, code_list):
 
-        f = open("UCS2.FNT",'w')
+        count = 1
+        ucs = -1
+
+        print "len 0x{0:X}".format(len(code_list))
+
+        f = open("UCS2.FNT",'wb')
         for sjis in code_list :
+            ucs = ucs + 1
+            
             if( sjis == 0 ): continue
             font_pos = self.search_font(sjis)
-            if( font_pos == 0 ): continue
+            #if( font_pos == 0 ): continue
 
-            #self.print_font(font_pos)
+            if(ucs==0x8c37):
+                print "sjis = 0x{0:X} count=0x{1:X}".format(sjis, count)
+                self.print_font(font_pos)
+                print self.Font[font_pos]
+
+            count = count + 1
             
             f.write( self.Font[font_pos] )
             
@@ -117,12 +131,17 @@ class SJIStoUnicode:
 
 
     def out_file(self):
-        f = open("UCSCODE.TBL",'w')
+        f = open("UCSCODE.TBL",'wb')
 
         f.write(struct.pack('H', len(self.block))) # Tnum
-        
+
+        cnt = 0
         for (start,end) in self.block :
             f.write(struct.pack('HH', start, end)) # Block(Start, End)
+            if( cnt < 1000): print "[{0:d}] {1:X}, {2:X}".format(cnt, start, end)
+
+            if( cnt == 640 ): print "---->", start
+            cnt = cnt + 1
 
         f.close()
     
